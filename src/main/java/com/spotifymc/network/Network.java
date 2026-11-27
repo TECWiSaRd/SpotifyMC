@@ -9,6 +9,9 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class Network {
     public static void register(RegisterPayloadHandlersEvent event) {
         // optional(): players without the mod can still join; they just don't hear music.
+        // The version string must change whenever any payload's fields or encoding change.
+        // Then a client and server on mismatched mod versions just don't exchange music
+        // (the player can still join), instead of misreading each other's packets and disconnecting.
         PayloadRegistrar registrar = event.registrar("1").optional();
 
         // The lambdas only touch ClientMusic when they run, which only happens on a client.

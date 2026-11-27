@@ -22,6 +22,9 @@ public final class ClientConfig {
 
     public static final ModConfigSpec.BooleanValue CHECK_FOR_UPDATES;
 
+    public static final ModConfigSpec.BooleanValue EXAROTON_AUTO_START;
+    public static final ModConfigSpec.ConfigValue<String> EXAROTON_SERVER;
+
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
 
@@ -69,6 +72,16 @@ public final class ClientConfig {
         b.push("updates");
         CHECK_FOR_UPDATES = b.comment("When joining a world, check GitHub for a newer SpotifyMC and offer to install it.")
                 .define("checkForUpdates", true);
+        b.pop();
+
+        b.push("exaroton");
+        EXAROTON_AUTO_START = b.comment("Start your exaroton server when Minecraft launches. Only does anything after",
+                        "you've set an API token with /exaroton token <token> (from exaroton.com/account).",
+                        "Running servers use exaroton credits; exaroton stops empty servers automatically.")
+                .define("autoStartOnLaunch", true);
+        EXAROTON_SERVER = b.comment("Which server to start: its name, address (e.g. myserver.exaroton.me) or ID.",
+                        "Leave empty if your account has only one server.")
+                .define("server", "");
         b.pop();
 
         SPEC = b.build();

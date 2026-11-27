@@ -27,5 +27,10 @@
   "spotifymc.configuration.loadTimeoutSeconds": "Load Timeout (seconds)",
   "spotifymc.configuration.updates": "Updates",
   "spotifymc.configuration.updates.tooltip": "Update notifications from GitHub",
-  "spotifymc.configuration.checkForUpdates": "Check for Updates on Join"
+  "spotifymc.configuration.checkForUpdates": "Check for Updates on Join",
+  "spotifymc.configuration.exaroton": "exaroton",
+  "spotifymc.configuration.exaroton.tooltip": "Start your exaroton server when Minecraft launches",
+  "spotifymc.configuration.autoStartOnLaunch": "Start Server on Launch",
+  "spotifymc.configuration.server": "Server",
+  "spotifymc.configuration.autoUpdate": "Automatic Updates (dedicated server)"
 }

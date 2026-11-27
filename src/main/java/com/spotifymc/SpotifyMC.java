@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.spotifymc.network.Network;
 import com.spotifymc.server.MusicCommands;
 import com.spotifymc.server.MusicServer;
+import com.spotifymc.server.ServerUpdater;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -30,5 +31,8 @@ public final class SpotifyMC {
         NeoForge.EVENT_BUS.addListener(MusicServer::onServerTick);
         NeoForge.EVENT_BUS.addListener(MusicServer::onPlayerLogin);
         NeoForge.EVENT_BUS.addListener(MusicServer::onServerStopped);
+        NeoForge.EVENT_BUS.addListener(ServerUpdater::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(ServerUpdater::onServerTick);
+        NeoForge.EVENT_BUS.addListener(ServerUpdater::onPlayerLogin);
     }
 }

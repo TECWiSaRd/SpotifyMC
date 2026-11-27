@@ -107,13 +107,35 @@ When you join a world, the mod checks [GitHub Releases](https://github.com/TECWi
 
 Restart Minecraft to use the new version. Nothing is downloaded unless you click. To turn off the check, set *Check for Updates on Join* to off in the config.
 
-Server owners update the server's jar by hand, because a server has no chat button to click. Players and the server should run the same version.
+**Servers update themselves.** A dedicated server, such as one on exaroton, checks GitHub when it starts and every 12 hours. It installs a newer version the same way: checksum-verified, replacing the old jar. The new version takes effect at the next restart, and online operators get a chat message saying so. To update by hand instead, set `autoUpdate = false` in `world/serverconfig/spotifymc-server.toml`.
+
+Players and the server don't have to be on the same version. Features follow whichever side runs them: queue and radio features come from the server, while volume, updates and exaroton come from the player. Music keeps working across versions unless an update changes the network protocol. In that case, mismatched players can still join but hear no music until they update.
 
 ### Publishing a new version (maintainers)
 
 1. Change `mod_version` in `gradle.properties`, for example to `1.0.2`, and commit.
 2. Tag the commit and push the tag: `git tag v1.0.2 && git push origin main v1.0.2`
 3. GitHub Actions builds the jar and publishes the release. The first build takes about 15 minutes; later ones are faster.
+
+## exaroton: start your server when Minecraft launches
+
+If your server is on [exaroton](https://exaroton.com), the mod can start it the moment Minecraft launches. By the time you reach the server list, it's usually online. This feature isn't related to the music.
+
+1. Create an API token at <https://exaroton.com/account/>.
+2. In-game, run `/exaroton token <your token>`. The mod lists your servers to confirm the token works.
+3. From now on, every time Minecraft launches, the server starts in the background. A pop-up appears when it's starting and when it's online.
+
+| Command | |
+|---|---|
+| `/exaroton start` / `stop` | Start or stop the server now |
+| `/exaroton status` | Show whether it's online, and how many players are on |
+| `/exaroton servers` | List the servers on your account |
+| `/exaroton token <token>` / `token clear` | Save or remove your API token |
+
+- **Several servers:** if your account has more than one, choose one under *Mods → SpotifyMC → Config → exaroton → Server*. You can enter its name, address or ID.
+- **Turning it off:** to keep the commands but stop the automatic start, turn off *Start Server on Launch*.
+- **Credits:** a running server uses exaroton credits. exaroton stops empty servers automatically after a while, so launching Minecraft and not joining costs only a few minutes.
+- **Keep the token private:** it can control your whole exaroton account. It's stored in `.minecraft/spotifymc/exaroton-token.txt`, readable only by you, and kept outside the `config` folder so modpack exports don't include it. Players without a token are unaffected.
 
 ## Linking Spotify (optional, Premium only)
 

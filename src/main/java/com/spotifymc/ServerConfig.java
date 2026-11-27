@@ -8,6 +8,7 @@ public final class ServerConfig {
     public static final ModConfigSpec.IntValue MAX_QUEUE_LENGTH;
     public static final ModConfigSpec.IntValue MAX_PLAYLIST_TRACKS;
     public static final ModConfigSpec.IntValue LOAD_TIMEOUT_SECONDS;
+    public static final ModConfigSpec.BooleanValue AUTO_UPDATE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -25,6 +26,11 @@ public final class ServerConfig {
                 .comment("If no client reports a track length within this many seconds (and the length",
                         "isn't otherwise known), the track is assumed unplayable and skipped.")
                 .defineInRange("loadTimeoutSeconds", 45, 5, 600);
+        AUTO_UPDATE = b
+                .comment("Dedicated servers only: check GitHub for a newer SpotifyMC when the server starts and",
+                        "every 12 hours, and install it automatically (checksum-verified). It takes effect after",
+                        "the next restart; online operators are told. Set to false to update by hand.")
+                .define("autoUpdate", true);
         SPEC = b.build();
     }
 
