@@ -38,6 +38,10 @@ public final class ClientCommands {
                     return say(ctx, "Resynced with the server.");
                 }))
                 .then(Commands.literal("status").executes(ClientCommands::status))
+                .then(Commands.literal("update").executes(ctx -> {
+                    UpdateChecker.installLatest();
+                    return 1;
+                }))
                 .then(Commands.literal("spotify")
                         .then(Commands.literal("link").executes(ClientCommands::spotifyLink))
                         .then(Commands.literal("unlink").executes(ctx -> {

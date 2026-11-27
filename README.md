@@ -94,8 +94,26 @@ By default anyone can use the control commands. Set `controlPermissionLevel = 2`
 | `/musicclient resync` | Restart the current track at the server's position |
 | `/musicclient status` | What's playing, and whether yt-dlp, ffmpeg and Spotify are set up |
 | `/musicclient spotify link` / `unlink` | Connect your Spotify account |
+| `/musicclient update` | Download and install the newest version from GitHub |
 
 All client settings are also available under **Mods → SpotifyMC → Config**.
+
+## Updates
+
+When you join a world, the mod checks [GitHub Releases](https://github.com/TECWiSaRd/SpotifyMC/releases) for a newer version. If there is one, chat shows **[Install update]** and **[What's new]** buttons. Clicking **[Install update]** does the following:
+- Downloads the new jar into your `mods` folder.
+- Checks it against the SHA-256 checksum GitHub publishes.
+- Removes the old jar. On Windows the old jar is locked while the game runs, so it's removed as soon as Minecraft closes.
+
+Restart Minecraft to use the new version. Nothing is downloaded unless you click. To turn off the check, set *Check for Updates on Join* to off in the config.
+
+Server owners update the server's jar by hand, because a server has no chat button to click. Players and the server should run the same version.
+
+### Publishing a new version (maintainers)
+
+1. Change `mod_version` in `gradle.properties`, for example to `1.0.2`, and commit.
+2. Tag the commit and push the tag: `git tag v1.0.2 && git push origin main v1.0.2`
+3. GitHub Actions builds the jar and publishes the release. The first build takes about 15 minutes; later ones are faster.
 
 ## Linking Spotify (optional, Premium only)
 
@@ -131,7 +149,7 @@ The server decides what your client streams, so the client limits what a server 
 ## Building
 
 ```
-./gradlew build          # → build/libs/spotifymc-1.0.0.jar
+./gradlew build          # → build/libs/spotifymc-<version>.jar
 ./gradlew runClient      # dev client
 ./gradlew runServer      # dev server (accept the EULA in run/eula.txt first)
 ```

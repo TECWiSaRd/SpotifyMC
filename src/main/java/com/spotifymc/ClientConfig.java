@@ -20,6 +20,8 @@ public final class ClientConfig {
     public static final ModConfigSpec.IntValue SPOTIFY_REDIRECT_PORT;
     public static final ModConfigSpec.BooleanValue PREFER_SPOTIFY_APP;
 
+    public static final ModConfigSpec.BooleanValue CHECK_FOR_UPDATES;
+
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
 
@@ -62,6 +64,11 @@ public final class ClientConfig {
         PREFER_SPOTIFY_APP = b.comment("When your Spotify account is linked, play Spotify tracks through your Spotify",
                         "app instead of the in-game YouTube match.")
                 .define("preferSpotifyApp", true);
+        b.pop();
+
+        b.push("updates");
+        CHECK_FOR_UPDATES = b.comment("When joining a world, check GitHub for a newer SpotifyMC and offer to install it.")
+                .define("checkForUpdates", true);
         b.pop();
 
         SPEC = b.build();

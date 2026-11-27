@@ -18,6 +18,7 @@ public final class SpotifyMCClient {
         NeoForge.EVENT_BUS.addListener(ClientMusic::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientMusic::onSelectMusic);
         NeoForge.EVENT_BUS.addListener(ClientMusic::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener(UpdateChecker::onLoggingIn);
         NeoForge.EVENT_BUS.addListener(ClientCommands::register);
     }
 }
