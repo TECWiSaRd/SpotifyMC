@@ -1,0 +1,32 @@
+{
+  "spotifymc.configuration.title": "SpotifyMC",
+  "spotifymc.configuration.section.spotifymc.client.toml": "Client Settings",
+  "spotifymc.configuration.section.spotifymc.client.toml.title": "Client Settings",
+  "spotifymc.configuration.section.spotifymc.server.toml": "Server Settings",
+  "spotifymc.configuration.section.spotifymc.server.toml.title": "Server Settings",
+
+  "spotifymc.configuration.playback": "Playback",
+  "spotifymc.configuration.playback.tooltip": "How server music plays on this client",
+  "spotifymc.configuration.enabled": "Play Server Music",
+  "spotifymc.configuration.volume": "Volume",
+  "spotifymc.configuration.muteVanillaMusic": "Mute Minecraft Music While Playing",
+
+  "spotifymc.configuration.tools": "Tools",
+  "spotifymc.configuration.tools.tooltip": "yt-dlp and ffmpeg, used for in-game audio",
+  "spotifymc.configuration.ytDlpPath": "yt-dlp Path",
+  "spotifymc.configuration.ffmpegPath": "ffmpeg Path",
+  "spotifymc.configuration.autoDownloadYtDlp": "Auto-download yt-dlp",
+  "spotifymc.configuration.ytDlpExtraArgs": "Extra yt-dlp Arguments",
+  "spotifymc.configuration.allowedHosts": "Allowed Sites",
+
+  "spotifymc.configuration.spotify": "Spotify",
+  "spotifymc.configuration.spotify.tooltip": "Play Spotify tracks through your own Spotify app",
+  "spotifymc.configuration.clientId": "Spotify Client ID",
+  "spotifymc.configuration.redirectPort": "Login Redirect Port",
+  "spotifymc.configuration.preferSpotifyApp": "Use Spotify App When Linked",
+
+  "spotifymc.configuration.controlPermissionLevel": "Control Permission Level",
+  "spotifymc.configuration.maxQueueLength": "Max Queue Length",
+  "spotifymc.configuration.maxPlaylistTracks": "Max Tracks per Playlist",
+  "spotifymc.configuration.loadTimeoutSeconds": "Load Timeout (seconds)"
+}
