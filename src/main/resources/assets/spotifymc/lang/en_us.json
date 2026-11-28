@@ -32,5 +32,11 @@
   "spotifymc.configuration.exaroton.tooltip": "Start your exaroton server when Minecraft launches",
   "spotifymc.configuration.autoStartOnLaunch": "Start Server on Launch",
   "spotifymc.configuration.server": "Server",
-  "spotifymc.configuration.autoUpdate": "Automatic Updates (dedicated server)"
+  "spotifymc.configuration.autoUpdate": "Automatic Updates (dedicated server)",
+  "spotifymc.configuration.motd": "Server List MOTD",
+  "spotifymc.configuration.motd.tooltip": "Show the current song under the server's name in the multiplayer list",
+  "spotifymc.configuration.showNowPlaying": "Show Current Song",
+  "spotifymc.configuration.playingFormat": "Playing Text",
+  "spotifymc.configuration.pausedFormat": "Paused Text",
+  "spotifymc.configuration.maxTitleLength": "Max Song Title Length"
 }

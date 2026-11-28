@@ -4,7 +4,9 @@ import com.spotifymc.ServerConfig;
 import com.spotifymc.SpotifyMC;
 import com.spotifymc.update.Updater;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -62,9 +64,17 @@ public final class ServerUpdater {
     }
 
     private static Component restartMessage(Updater.Installed done) {
+        // The server has no exaroton token, so the button runs the clicking player's client-side
+        // /exaroton restart, which uses their own token. Anyone else just gets a "set a token" hint.
         return Component.literal("♪ SpotifyMC " + done.release().version()
-                + " was installed on this server. It takes effect after the next restart. Players should update too.")
-                .withStyle(ChatFormatting.GOLD);
+                        + " was installed on this server. It takes effect after the next restart. ")
+                .withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("[Restart server]").withStyle(s -> s
+                        .withColor(ChatFormatting.GREEN).withUnderlined(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/exaroton restart"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(
+                                "Restarts the server through exaroton now.\nDisconnects everyone for about a minute.\n"
+                                        + "Needs your exaroton token (/exaroton token)")))));
     }
 
     private ServerUpdater() {}

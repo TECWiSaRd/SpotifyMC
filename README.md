@@ -83,6 +83,28 @@ yt-dlp: by default the mod downloads the official release from GitHub into `.min
 
 Spotify's own personalized radio and Daily Mix playlists only exist inside each user's account, so the server can't read them. Use `/music radio <spotify artist or song link>` instead.
 
+### Song in the server list
+
+While music plays, the server list's MOTD (the text under the server's name in *Multiplayer*) shows the song on its second line. Your own first line stays as it is:
+
+```
+Da Bro Crossroad - Create & chill
+♪ Now playing: Daft Punk - Get Lucky
+```
+
+When the music stops or the queue runs out, your normal MOTD comes back. Only the running server's copy changes; `server.properties` is never edited, so a crash or restart always comes back with your own MOTD. The server list refreshes it every few seconds.
+
+To configure it, edit the `[motd]` section of `world/serverconfig/spotifymc-server.toml`:
+
+| Setting | Default | |
+|---|---|---|
+| `showNowPlaying` | `true` | Turn the feature on or off |
+| `playingFormat` | `&a♪ Now playing: &f{song}` | The second line while playing. `{song}` is the title, and `&` color codes work |
+| `pausedFormat` | `&7⏸ Paused: {song}` | The second line while paused. Leave it empty to show your normal MOTD while paused |
+| `maxTitleLength` | `40` | Longer titles are shortened with "…" |
+
+Changes apply from the next song.
+
 By default anyone can use the control commands. Set `controlPermissionLevel = 2` in `world/serverconfig/spotifymc-server.toml` to limit them to operators.
 
 ### `/musicclient` (only affects you)
@@ -107,7 +129,7 @@ When you join a world, the mod checks [GitHub Releases](https://github.com/TECWi
 
 Restart Minecraft to use the new version. Nothing is downloaded unless you click. To turn off the check, set *Check for Updates on Join* to off in the config.
 
-**Servers update themselves.** A dedicated server, such as one on exaroton, checks GitHub when it starts and every 12 hours. It installs a newer version the same way: checksum-verified, replacing the old jar. The new version takes effect at the next restart, and online operators get a chat message saying so. To update by hand instead, set `autoUpdate = false` in `world/serverconfig/spotifymc-server.toml`.
+**Servers update themselves.** A dedicated server, such as one on exaroton, checks GitHub when it starts and every 12 hours. It installs a newer version the same way: checksum-verified, replacing the old jar. The new version takes effect at the next restart. Online operators get a chat message with a **[Restart server]** button, which restarts the server through exaroton. The button only works for someone who has set an exaroton token. To update by hand instead, set `autoUpdate = false` in `world/serverconfig/spotifymc-server.toml`.
 
 Players and the server don't have to be on the same version. Features follow whichever side runs them: queue and radio features come from the server, while volume, updates and exaroton come from the player. Music keeps working across versions unless an update changes the network protocol. In that case, mismatched players can still join but hear no music until they update.
 
@@ -128,7 +150,9 @@ If your server is on [exaroton](https://exaroton.com), the mod can start it the 
 | Command | |
 |---|---|
 | `/exaroton start` / `stop` | Start or stop the server now |
-| `/exaroton status` | Show whether it's online, and how many players are on |
+| `/exaroton restart` | Restart the server. Everyone is disconnected for about a minute |
+| `/exaroton cmd <command>` | Run a command in the server console, e.g. `/exaroton cmd whitelist add Steve`. Works from anywhere, even when you're not on the server. The console's reply isn't shown |
+| `/exaroton status` | Show whether it's online, and who's playing |
 | `/exaroton servers` | List the servers on your account |
 | `/exaroton token <token>` / `token clear` | Save or remove your API token |
 

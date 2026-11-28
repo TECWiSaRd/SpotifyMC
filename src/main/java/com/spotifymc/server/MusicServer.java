@@ -20,6 +20,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -42,6 +43,10 @@ public final class MusicServer {
     private static long startNanos;        // System.nanoTime() at which elapsed was 0
     private static long pausedAtMs = -1;   // >= 0 while paused
     private static long nextId = 1;
+
+    /** The server's own MOTD, captured at startup and restored whenever no song is showing. */
+    private static String originalMotd;
+    private static String lastMotd;
 
     // Radio: endless YouTube Mix. Tracks it adds are marked fromRadio and stay behind requested songs.
     private static boolean radioOn;
@@ -160,12 +165,14 @@ public final class MusicServer {
         current = null;
         pausedAtMs = -1;
         broadcast(server, StopPayload.INSTANCE);
+        updateMotd(server);
     }
 
     public static boolean pause(MinecraftServer server) {
         if (current == null || pausedAtMs >= 0) return false;
         pausedAtMs = elapsedMs();
         broadcast(server, playPayload());
+        updateMotd(server);
         return true;
     }
 
@@ -174,6 +181,7 @@ public final class MusicServer {
         startNanos = System.nanoTime() - pausedAtMs * 1_000_000L;
         pausedAtMs = -1;
         broadcast(server, playPayload());
+        updateMotd(server);
         return true;
     }
 
@@ -209,10 +217,12 @@ public final class MusicServer {
         if (radioOn && QUEUE.size() < RADIO_LOW_WATER) refillRadio(server);
         if (current == null) {
             broadcast(server, StopPayload.INSTANCE);
+            updateMotd(server);
             return;
         }
         startNanos = System.nanoTime();
         broadcast(server, playPayload());
+        updateMotd(server);
         server.getPlayerList().broadcastSystemMessage(Component.literal("♪ Now playing: ").withStyle(ChatFormatting.GREEN)
                 .append(Component.literal(current.title).withStyle(ChatFormatting.WHITE))
                 .append(Component.literal(current.fromRadio ? " (radio)" : " (requested by " + current.requestedBy + ")")
@@ -243,6 +253,7 @@ public final class MusicServer {
         if (!t.titleKnown && !info.title().isBlank()) {
             t.title = info.title().strip();
             t.titleKnown = true;
+            updateMotd(from.server); // a plain search ("levels") now has its real title
         }
         // Ignore nonsense so a modified client can't skip tracks instantly.
         if (info.durationMs() == 0) {
@@ -276,7 +287,55 @@ public final class MusicServer {
         }
     }
 
+    public static void onServerStarted(ServerStartedEvent event) {
+        originalMotd = event.getServer().getMotd();
+        lastMotd = null;
+    }
+
+    // ---- MOTD ----
+
+    /**
+     * Puts the current song on the MOTD's second line, or restores the original. Only the running
+     * server's copy changes (the server list refreshes it every few seconds); server.properties is
+     * untouched, so a crash or restart always comes back with the owner's MOTD.
+     */
+    static void updateMotd(MinecraftServer server) {
+        if (originalMotd == null) return;
+        String line = null;
+        Track t = current;
+        if (t != null && ServerConfig.MOTD_ENABLED.get()) {
+            String format = pausedAtMs >= 0 ? ServerConfig.MOTD_PAUSED_FORMAT.get() : ServerConfig.MOTD_PLAYING_FORMAT.get();
+            if (!format.isBlank()) line = colors(format).replace("{song}", shorten(t.title, ServerConfig.MOTD_MAX_TITLE_LENGTH.get()));
+        }
+        String motd;
+        if (line == null) {
+            motd = originalMotd;
+        } else {
+            int newline = originalMotd.indexOf('\n');
+            String first = newline >= 0 ? originalMotd.substring(0, newline) : originalMotd;
+            // §r stops colors from the first line spilling into the song line.
+            motd = first + "\n\u00a7r" + line;
+        }
+        if (!motd.equals(lastMotd)) {
+            lastMotd = motd;
+            server.setMotd(motd);
+        }
+    }
+
+    /** "&a" style color codes → Minecraft's "§a". "&&" stays a literal "&". */
+    private static String colors(String s) {
+        return s.replace("&&", "\u0000").replaceAll("&([0-9a-fk-orA-FK-OR])", "\u00a7$1").replace("\u0000", "&");
+    }
+
+    private static String shorten(String title, int max) {
+        // Song titles come from YouTube; strip any formatting codes they might contain.
+        String clean = title.replaceAll("\u00a7.?", "").replaceAll("\\s+", " ").strip();
+        return clean.length() <= max ? clean : clean.substring(0, max - 1).strip() + "…";
+    }
+
     public static void onServerStopped(ServerStoppedEvent event) {
+        originalMotd = null;
+        lastMotd = null;
         radioOn = false;
         radioRefilling = false;
         RADIO_SEEN.clear();

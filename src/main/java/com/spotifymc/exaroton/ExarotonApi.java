@@ -19,7 +19,9 @@ final class ExarotonApi {
     static final int OFFLINE = 0, ONLINE = 1, STARTING = 2, STOPPING = 3, RESTARTING = 4, SAVING = 5,
             LOADING = 6, CRASHED = 7, PENDING = 8, TRANSFERRING = 9, PREPARING = 10;
 
-    record Server(String id, String name, String address, int status, int players, int maxPlayers) {
+    /** {@code playerNames} may be empty even when players are on: exaroton says the list is "not always available". */
+    record Server(String id, String name, String address, int status, int players, int maxPlayers,
+                  List<String> playerNames) {
         String statusName() {
             return switch (status) {
                 case OFFLINE -> "offline";
@@ -59,21 +61,45 @@ final class ExarotonApi {
         call(token, "/servers/" + enc(id) + "/stop/");
     }
 
+    static void restart(String token, String id) throws IOException {
+        call(token, "/servers/" + enc(id) + "/restart/");
+    }
+
+    /** Runs a command in the server console, as if typed there (no leading slash needed). */
+    static void command(String token, String id, String command) throws IOException {
+        JsonObject body = new JsonObject();
+        body.addProperty("command", command);
+        call(token, "/servers/" + enc(id) + "/command/", body.toString());
+    }
+
     private static Server parse(JsonObject o) {
         JsonObject players = o.has("players") && o.get("players").isJsonObject() ? o.getAsJsonObject("players") : null;
+        List<String> names = new ArrayList<>();
+        if (players != null && players.has("list") && players.get("list").isJsonArray()) {
+            for (JsonElement n : players.getAsJsonArray("list")) {
+                if (n.isJsonPrimitive()) names.add(n.getAsString());
+            }
+        }
         return new Server(str(o, "id"), str(o, "name"), str(o, "address"),
                 o.has("status") ? o.get("status").getAsInt() : -1,
                 players != null && players.has("count") ? players.get("count").getAsInt() : 0,
-                players != null && players.has("max") ? players.get("max").getAsInt() : 0);
+                players != null && players.has("max") ? players.get("max").getAsInt() : 0,
+                List.copyOf(names));
     }
 
-    /** Sends a GET and returns the "data" part of exaroton's {success, error, data} envelope. */
     private static JsonElement call(String token, String path) throws IOException {
-        HttpRequest req = HttpRequest.newBuilder(URI.create(BASE + path))
+        return call(token, path, null);
+    }
+
+    /** Sends a GET (or a POST when {@code jsonBody} is given) and returns the "data" part of exaroton's {success, error, data} envelope. */
+    private static JsonElement call(String token, String path, String jsonBody) throws IOException {
+        HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(BASE + path))
                 .timeout(Duration.ofSeconds(20))
                 .header("Authorization", "Bearer " + token)
-                .header("User-Agent", "SpotifyMC")
-                .GET().build();
+                .header("User-Agent", "SpotifyMC");
+        if (jsonBody == null) b.GET();
+        else b.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(jsonBody));
+        HttpRequest req = b.build();
         HttpResponse<String> res;
         try {
             res = HTTP.send(req, HttpResponse.BodyHandlers.ofString());

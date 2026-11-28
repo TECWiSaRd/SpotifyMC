@@ -24,7 +24,7 @@ import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 
 /**
  * Starts your exaroton server when Minecraft launches, so it's (nearly) ready by the time you
- * reach the server list. Also adds /exaroton start|stop|status|servers|token.
+ * reach the server list. Also adds /exaroton start|stop|restart|cmd|status|servers|token.
  *
  * <p>The API token can control your whole exaroton account, so it lives in its own file
  * (.minecraft/spotifymc/exaroton-token.txt), not in the config folder that modpack exports include.
@@ -60,6 +60,18 @@ public final class ExarotonLauncher {
                     background(ExarotonLauncher::stop);
                     return 1;
                 }))
+                .then(Commands.literal("restart").executes(ctx -> {
+                    if (!requireToken(ctx)) return 0;
+                    background(ExarotonLauncher::restart);
+                    return 1;
+                }))
+                .then(Commands.literal("cmd")
+                        .then(Commands.argument("command", StringArgumentType.greedyString()).executes(ctx -> {
+                            if (!requireToken(ctx)) return 0;
+                            String command = StringArgumentType.getString(ctx, "command").trim().replaceFirst("^/", "");
+                            background(() -> sendCommand(command));
+                            return 1;
+                        })))
                 .then(Commands.literal("status").executes(ctx -> {
                     if (!requireToken(ctx)) return 0;
                     background(ExarotonLauncher::status);
@@ -110,7 +122,7 @@ public final class ExarotonLauncher {
             String token = readToken();
             ExarotonApi.Server s = pickServer(token);
             if (s.status() == ExarotonApi.ONLINE) {
-                if (fromCommand) notify(s.name() + " is already online: " + s.address(), false);
+                if (fromCommand) notify(s.name() + " is already online: " + s.address() + playersSuffix(s), false);
                 return;
             }
             if (s.status() == ExarotonApi.OFFLINE || s.status() == ExarotonApi.CRASHED) {
@@ -119,7 +131,7 @@ public final class ExarotonLauncher {
             } else {
                 notify(s.name() + " is " + s.statusName() + "…", false);
             }
-            watchUntilOnline(token, s.id());
+            watchUntilOnline(token, s.id(), false);
         } catch (IOException e) {
             notify("Couldn't start the server: " + e.getMessage(), true);
         } finally {
@@ -127,14 +139,22 @@ public final class ExarotonLauncher {
         }
     }
 
-    private static void watchUntilOnline(String token, String id) throws IOException {
-        long deadline = System.currentTimeMillis() + WATCH_LIMIT_MS;
+    /**
+     * Polls until the server is online. For a restart, exaroton may still report ONLINE for a
+     * moment after the request, so {@code mustGoDownFirst} ignores ONLINE until it has seen
+     * another status (or a minute has passed).
+     */
+    private static void watchUntilOnline(String token, String id, boolean mustGoDownFirst) throws IOException {
+        long start = System.currentTimeMillis();
+        long deadline = start + WATCH_LIMIT_MS;
         int lastStatus = -1;
+        boolean wentDown = !mustGoDownFirst;
         while (System.currentTimeMillis() < deadline) {
             sleep(POLL_MS);
             ExarotonApi.Server s = ExarotonApi.get(token, id);
-            if (s.status() == ExarotonApi.ONLINE) {
-                notify(s.name() + " is online! " + s.address(), false);
+            if (s.status() != ExarotonApi.ONLINE) wentDown = true;
+            if (s.status() == ExarotonApi.ONLINE && (wentDown || System.currentTimeMillis() - start > 60_000)) {
+                notify(s.name() + " is online! " + s.address() + playersSuffix(s), false);
                 return;
             }
             if (s.status() == ExarotonApi.OFFLINE || s.status() == ExarotonApi.CRASHED) {
@@ -162,11 +182,58 @@ public final class ExarotonLauncher {
         }
     }
 
+    private static void restart() {
+        if (!BUSY.compareAndSet(false, true)) {
+            notify("Already starting the server, hang on.", false);
+            return;
+        }
+        try {
+            String token = readToken();
+            ExarotonApi.Server s = pickServer(token);
+            if (s.status() != ExarotonApi.ONLINE) {
+                // Nothing to restart; a plain start does the job.
+                BUSY.set(false);
+                startAndWatch(true);
+                return;
+            }
+            ExarotonApi.restart(token, s.id());
+            notify("Restarting " + s.name() + ". Everyone is disconnected for about a minute.", false);
+            watchUntilOnline(token, s.id(), true);
+        } catch (IOException e) {
+            notify("Couldn't restart the server: " + e.getMessage(), true);
+        } finally {
+            BUSY.set(false);
+        }
+    }
+
+    private static void sendCommand(String command) {
+        if (command.isEmpty()) return;
+        try {
+            String token = readToken();
+            ExarotonApi.Server s = pickServer(token);
+            if (s.status() != ExarotonApi.ONLINE) {
+                notify(s.name() + " is " + s.statusName() + "; commands only work while it's online.", true);
+                return;
+            }
+            ExarotonApi.command(token, s.id(), command);
+            // The API doesn't return the console output, so we can only confirm it was sent.
+            chat("Sent to the server console: " + command, ChatFormatting.GREEN);
+        } catch (IOException e) {
+            notify("Couldn't send the command: " + e.getMessage(), true);
+        }
+    }
+
+    /** ", 2/20 players: Alex, Sam" for online servers, "" otherwise. */
+    private static String playersSuffix(ExarotonApi.Server s) {
+        if (s.status() != ExarotonApi.ONLINE) return "";
+        String names = s.playerNames().isEmpty() ? "" : ": " + String.join(", ", s.playerNames());
+        return " · " + s.players() + "/" + s.maxPlayers() + " players" + names;
+    }
+
     private static void status() {
         try {
             ExarotonApi.Server s = pickServer(readToken());
-            notify(s.name() + " (" + s.address() + ") is " + s.statusName()
-                    + (s.status() == ExarotonApi.ONLINE ? ", " + s.players() + "/" + s.maxPlayers() + " players" : "") + ".", false);
+            notify(s.name() + " (" + s.address() + ") is " + s.statusName() + playersSuffix(s) + ".", false);
         } catch (IOException e) {
             notify("Couldn't get the server status: " + e.getMessage(), true);
         }
@@ -180,7 +247,9 @@ public final class ExarotonLauncher {
                 return;
             }
             StringBuilder sb = new StringBuilder("Your exaroton servers:");
-            for (ExarotonApi.Server s : servers) sb.append("\n • ").append(s.name()).append(" (").append(s.address()).append(") ").append(s.statusName());
+            for (ExarotonApi.Server s : servers) {
+                sb.append("\n • ").append(s.name()).append(" (").append(s.address()).append(") ").append(s.statusName()).append(playersSuffix(s));
+            }
             if (servers.size() > 1 && ClientConfig.EXAROTON_SERVER.get().isBlank()) {
                 sb.append("\nYou have several, so set which one to use: Mods → SpotifyMC → Config → exaroton → Server.");
             }

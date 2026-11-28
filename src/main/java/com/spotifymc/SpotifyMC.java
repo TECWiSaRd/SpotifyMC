@@ -30,6 +30,7 @@ public final class SpotifyMC {
         NeoForge.EVENT_BUS.addListener(MusicCommands::register);
         NeoForge.EVENT_BUS.addListener(MusicServer::onServerTick);
         NeoForge.EVENT_BUS.addListener(MusicServer::onPlayerLogin);
+        NeoForge.EVENT_BUS.addListener(MusicServer::onServerStarted);
         NeoForge.EVENT_BUS.addListener(MusicServer::onServerStopped);
         NeoForge.EVENT_BUS.addListener(ServerUpdater::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ServerUpdater::onServerTick);

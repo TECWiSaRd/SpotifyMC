@@ -10,6 +10,11 @@ public final class ServerConfig {
     public static final ModConfigSpec.IntValue LOAD_TIMEOUT_SECONDS;
     public static final ModConfigSpec.BooleanValue AUTO_UPDATE;
 
+    public static final ModConfigSpec.BooleanValue MOTD_ENABLED;
+    public static final ModConfigSpec.ConfigValue<String> MOTD_PLAYING_FORMAT;
+    public static final ModConfigSpec.ConfigValue<String> MOTD_PAUSED_FORMAT;
+    public static final ModConfigSpec.IntValue MOTD_MAX_TITLE_LENGTH;
+
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         CONTROL_PERMISSION_LEVEL = b
@@ -31,6 +36,21 @@ public final class ServerConfig {
                         "every 12 hours, and install it automatically (checksum-verified). It takes effect after",
                         "the next restart; online operators are told. Set to false to update by hand.")
                 .define("autoUpdate", true);
+
+        b.comment("Shows the current song as the second line of the server's MOTD (the text under its",
+                "name in the multiplayer list). Your own first line is kept, and your original MOTD comes",
+                "back as soon as the music stops. server.properties is never changed.").push("motd");
+        MOTD_ENABLED = b.comment("Show the current song in the MOTD.")
+                .define("showNowPlaying", true);
+        MOTD_PLAYING_FORMAT = b.comment("Second MOTD line while a song plays. {song} is the title.",
+                        "Colors: &a green, &f white, &7 gray, &e yellow, &b aqua, &l bold, etc.")
+                .define("playingFormat", "&a♪ Now playing: &f{song}");
+        MOTD_PAUSED_FORMAT = b.comment("Second MOTD line while paused. Leave empty to show your normal MOTD while paused.")
+                .define("pausedFormat", "&7⏸ Paused: {song}");
+        MOTD_MAX_TITLE_LENGTH = b.comment("Song titles longer than this are shortened with \"…\" so the line fits the server list.")
+                .defineInRange("maxTitleLength", 40, 10, 200);
+        b.pop();
+
         SPEC = b.build();
     }
 
